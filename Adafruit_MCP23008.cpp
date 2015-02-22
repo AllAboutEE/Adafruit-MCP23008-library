@@ -74,7 +74,9 @@ void Adafruit_MCP23008::pinMode(uint8_t p, uint8_t d) {
   // only 8 bits!
   if (p > 7)
     return;
-  
+	
+  //Setting a bit in the IODIR register makes the corresponding pin an INPUT,
+  //and clearing a bit makes the corresponding pin an OUTPUT
   iodir = read8(MCP23008_IODIR);
 
   // set the pin and direction
@@ -97,6 +99,83 @@ void Adafruit_MCP23008::writeGPIO(uint8_t gpio) {
   write8(MCP23008_GPIO, gpio);
 }
 
+void Adafruit_MCP23008::interruptMode(uint8_t p, uint8_t d){
+  uint8_t inten;
+  
+
+  // only 8 bits!
+  if (p > 7)
+    return;
+  
+  //If a bit is set on the GPINTEN register, the corresponding pin is enabled for
+  //interrupt-on-change. The DEFVAL and INTCON registers must also be configured
+  inten = read8(MCP23008_GPINTEN);
+
+  // set the pin and direction
+  if (d == LOW) {
+    inten &= ~(1 << p);
+  } else {
+    inten |= 1 << p; 
+  }
+
+  // write the new INTEN
+  write8(MCP23008_GPINTEN, inten);
+}
+
+void Adafruit_MCP23008::writeDEFVAL(uint8_t defval){
+	
+	//The default comparison value is configured in the DEFVAL register. If enabled
+	//to compare against the DEFVAL register, an opposite value on the 
+	//associated pin will cause an interrupt to occur.
+	if(defval > 0xFF)
+		return;
+	write8(MCP23008_DEFVAL, defval);
+}
+
+void Adafruit_MCP23008::writeINTCON(uint8_t val){
+	
+	//If a bit is set on the INTCON register, the corresponding I/O pin is compared
+	//against the associated bit in the DEFVAL register. If a bit is cleared, the
+	//corresponding I/O pin is compared against the previous value.
+	if(val > 0xFF){
+		val = 0xFF;
+	}
+	
+	write8(MCP23008_INTCON, val);
+}
+
+uint8_t Adafruit_MCP23008::readINTF(void){
+	 return read8(MCP23008_INTF);
+}
+
+uint8_t Adafruit_MCP23008::readINTCAP(void){
+	
+	//The INTCAP register captures the GPIO port value at the time the interrupt occurred.
+	//the register is updated on when an interrupt occurs, and will remain unchanged until
+	//the interrupt is cleared via a read of INTCAP or GPIO
+	return read8(MCP23008_INTCAP);
+}
+
+void Adafruit_MCP23008::writeIOCON(uint8_t val){
+	if(val > 0xFF){
+		val = 0xFF;
+	}
+			
+	write8(MCP23008_IOCON, val);
+}
+
+void Adafruit_MCP23008::writeIOCON_INTPOL(uint8_t val){
+	uint8_t iocon;
+	iocon = read8(MCP23008_IOCON);
+	 
+	if(val == 0){
+		iocon = iocon & ~(1<<1);
+	}else{
+		iocon = iocon | (1<<1);
+		}
+	 
+	writeIOCON(iocon);
+}
 
 void Adafruit_MCP23008::digitalWrite(uint8_t p, uint8_t d) {
   uint8_t gpio;
@@ -126,6 +205,8 @@ void Adafruit_MCP23008::pullUp(uint8_t p, uint8_t d) {
   if (p > 7)
     return;
 
+  //If a bit is set in the GPPU register, and the corresponding pin is configured
+  //as an INPUT, the pull-up resistor for that pin is enabled.
   gppu = read8(MCP23008_GPPU);
   // set the pin and direction
   if (d == HIGH) {
@@ -162,7 +243,6 @@ uint8_t Adafruit_MCP23008::read8(uint8_t addr) {
   return Wire.receive();
 #endif
 }
-
 
 void Adafruit_MCP23008::write8(uint8_t addr, uint8_t data) {
   Wire.beginTransmission(MCP23008_ADDRESS | i2caddr);

@@ -19,13 +19,26 @@ public:
   void begin(uint8_t addr);
   void begin(void);
 
+  //Declare a pin as an OUTPUT or INPUT
   void pinMode(uint8_t p, uint8_t d);
   void digitalWrite(uint8_t p, uint8_t d);
+  //Enable or disable pull up resistors
   void pullUp(uint8_t p, uint8_t d);
   uint8_t digitalRead(uint8_t p);
   uint8_t readGPIO(void);
   void writeGPIO(uint8_t);
-
+  //Control the interrupt-on-change feature for each pin
+  void interruptMode(uint8_t pin, uint8_t data);
+  //Set the comparison value for interrupts to occur
+  void writeDEFVAL(uint8_t defval);
+  //Decide whether a pin will be compared against the DEFVAL or previous value
+  void writeINTCON(uint8_t val);
+  uint8_t readINTF(void);
+  //Returns the GPIO port value when an interrupt occurs
+  uint8_t readINTCAP(void);
+  void writeIOCON(uint8_t val);
+  void writeIOCON_INTPOL(uint8_t val);
+  
  private:
   uint8_t i2caddr;
   uint8_t read8(uint8_t addr);
